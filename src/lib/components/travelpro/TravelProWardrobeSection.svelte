@@ -1,0 +1,164 @@
+<script lang="ts">
+  import type { WardrobeSection } from '$lib/types';
+
+  interface Props {
+    wardrobeSection: WardrobeSection;
+  }
+
+  let { wardrobeSection }: Props = $props();
+
+  function handleBuy(redirectUrl: string) {
+    window.open(redirectUrl, '_blank');
+  }
+</script>
+
+<section class="section wardrobe">
+  <div class="section-header">
+    <h2 class="section-title">{wardrobeSection.title}</h2>
+    <p class="section-subtitle">{wardrobeSection.subtitle}</p>
+  </div>
+  <div class="scroll-x">
+    {#each wardrobeSection.items.slice(0, 2) as item (item.id)}
+      <div class="wardrobe-item">
+        <div class="item-thumb">
+          <img
+            src={item.collectionImage}
+            alt={item.title}
+            class="item-img"
+            loading="lazy"
+          />
+          <!-- shimmer overlay while generating (if still showing original imageUrl) -->
+        </div>
+        <div class="item-info">
+          <div class="item-details">
+            <p class="item-name">{item.products?.[0]?.name}</p>
+            <p class="item-price">{item.products?.[0]?.price}</p>
+          </div>
+          <button class="buy-btn" onclick={() => handleBuy(item.products?.[0]?.redirectUrl ?? '#')}>
+            BUY
+          </button>
+        </div>
+      </div>
+    {/each}
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-bottom: 1.5rem;
+  }
+
+  .wardrobe {
+    background: rgba(17,17,17,1);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 1.5rem 1.5rem 0 1.5rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display';
+    font-weight: 400;
+    font-size: 1.5rem;
+    line-height: 120%;
+    text-align: center;
+    color: white;
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  .section-subtitle {
+    color: #fff;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    opacity: 0.8;
+  }
+
+  .scroll-x {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .wardrobe-item {
+    flex: 1;
+    max-width: 10.5rem;
+    min-width: 0;
+  }
+
+  .item-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9.5 / 14.375;
+    overflow: hidden;
+  }
+
+  .item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .item-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 3.5rem;
+    padding: 0 0.5rem;
+    background: rgba(42,42,42,1);
+    border: 1px solid rgba(255,255,255,0.13);
+    box-shadow: 0px 0px 6.67px 0px rgba(0,0,0,0.35);
+  }
+
+  .item-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.25rem;
+    max-width: 5rem;
+  }
+
+  .item-name {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+
+  .item-price {
+    font-size: 0.75rem;
+    color: white;
+    font-weight: 600;
+  }
+
+  .buy-btn {
+    background: white;
+    color: black;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    display: flex;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    border: none;
+    flex-shrink: 0;
+  }
+</style>
