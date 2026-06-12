@@ -1,8 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import catalogData from '$lib/data/catalog.json';
 
 interface CatalogProduct {
   id: number;
@@ -28,15 +27,8 @@ interface GeminiResponse {
   suggestions: string[];
 }
 
-// Load catalog once at module level
-let catalog: CatalogProduct[] = [];
-try {
-  const catalogPath = resolve('src/lib/data/catalog.json');
-  const raw = readFileSync(catalogPath, 'utf-8');
-  catalog = JSON.parse(raw).products;
-} catch {
-  console.warn('[chat] Could not load catalog.json');
-}
+// Load catalog from bundled JSON (works on Vercel serverless)
+const catalog: CatalogProduct[] = (catalogData as { products: CatalogProduct[] }).products || [];
 
 function buildSystemPrompt(): string {
   const productList = catalog
