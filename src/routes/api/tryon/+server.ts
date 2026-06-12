@@ -30,10 +30,14 @@ export const POST: RequestHandler = async ({ request }) => {
         const mimeType = header.replace('data:', '').replace(';base64', '');
         return { data, mimeType };
       }
-      const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(20000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bot/1.0)' },
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const buf = await res.arrayBuffer();
-      const mime = res.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
+      const ct = res.headers.get('content-type')?.split(';')[0] || '';
+      const mime = ct && ct.startsWith('image/') ? ct : 'image/jpeg';
       return { data: Buffer.from(buf).toString('base64'), mimeType: mime };
     } catch (e) {
       console.error('[tryon] image load failed:', url.slice(0, 80), e);
