@@ -7,7 +7,7 @@
   import { onboardingStore } from '$lib/stores/onboarding.svelte';
   import { onNavigate } from '$app/navigation';
   import { onMount } from 'svelte';
-  import { loadSentinel, updateSentinelUserId } from '$lib/utils/analytics';
+  // import { loadSentinel, updateSentinelUserId } from '$lib/utils/analytics';
   import { API_ENDPOINTS, CDN_RESIZER_BASE } from '$lib/config/env';
   import { userStore } from '$lib/stores/user.svelte';
 
@@ -46,12 +46,8 @@
   onMount(() => {
     authService.initialize();
     
-    // Initialize Sentinel analytics
-    loadSentinel({
-      pageName: 'APP_INIT',
-      url: window.location.href,
-      referrer: document.referrer
-    });
+    // Sentinel analytics disabled (not on allowed origins for this domain)
+    // loadSentinel({ pageName: 'APP_INIT', url: window.location.href, referrer: document.referrer });
   });
 
   // Update Sentinel userId reactively when user logs in or accountId changes
