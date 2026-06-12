@@ -51,7 +51,8 @@ export const POST: RequestHandler = async ({ request }) => {
   ]);
 
   if (!selfie || !product) {
-    return json({ error: 'Could not load one or both images' }, { status: 422 });
+    const which = !selfie ? 'selfie' : 'product';
+    return json({ error: `Could not load ${which} image — URL type: ${!selfie ? selfieUrl.slice(0, 30) : productImageUrl.slice(0, 30)}` }, { status: 422 });
   }
 
   console.log('[tryon] selfie bytes:', selfie.data.length, 'product bytes:', product.data.length, 'type:', productType);
