@@ -1,0 +1,27 @@
+---
+name: Build Pipeline
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+      - develop*
+      - master*
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
+concurrency:
+  group: caller-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    name: 'PR'
+    uses: inmobi-se/central-workflows/.github/workflows/workflow-pr-implementation.yml@master
+    secrets: inherit

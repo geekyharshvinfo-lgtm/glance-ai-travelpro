@@ -1,0 +1,40 @@
+name: Checks
+description: 'CI Hygiene workflow build pipeline'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop*
+      - master*
+  merge_group:
+    branches:
+      - master*
+      
+env:
+  NODE_VERSION: '18'
+  NPM_VERSION: '8.19.4'
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  statuses: write
+  checks: write
+
+concurrency:
+  group: hygiene-${{ github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ==============================================
+  # Hygiene Checks
+  # ==============================================
+  setup-hygiene-checks:
+    name: 'Hygiene'
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged != true)
+    uses: inmobi-se/central-workflows/.github/workflows/workflow-hygiene.yml@master
+    secrets: inherit

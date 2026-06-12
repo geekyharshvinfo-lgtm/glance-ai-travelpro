@@ -1,0 +1,20 @@
+version: 1
+component:
+  name: ai-influencer-web-prod
+  type: service
+  lifecycle: generally_available
+  tier: tier_2
+  owner: embed
+  system: frontend_embed_Ailooks
+  language: TypeScript
+  framework: Svelte,SvelteKit,Vitest
+  description: ai-influencer-web-prod service
+  aliases:
+  - ai-influencer-web-prod
+  tags:
+  - key: environment
+    value: prod
+  repositories:
+  - name: inmobi-glance/ai-influencer-web
+    provider: github
+    path: /

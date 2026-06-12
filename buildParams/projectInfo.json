@@ -1,0 +1,8 @@
+{
+    "project_name": "ai-influencer-web",
+    "project_type": "npm",
+    "team_email": "nancy.anand@inmobi.com",
+    "jira_project": "AIP",
+    "docker_compose": false,
+    "branching_workflow": "github_flow"
+}

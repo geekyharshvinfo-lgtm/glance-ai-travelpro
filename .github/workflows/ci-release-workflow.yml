@@ -1,0 +1,19 @@
+---
+name: CI - Release Workflow
+
+on:
+  push:
+    branches:
+      - master*
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Optional reason for manual trigger'
+        required: false
+        type: string
+
+jobs:
+  run:
+    name: 'Release'
+    uses: inmobi-se/central-workflows/.github/workflows/workflow-release-implementation.yml@master
+    secrets: inherit

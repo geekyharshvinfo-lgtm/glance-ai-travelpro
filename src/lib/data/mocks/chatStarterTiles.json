@@ -1,0 +1,52 @@
+{
+  "starterTiles": [
+    {
+      "id": "starter-wardrobe",
+      "icon": "https://x-stg.glance-cdn.com/public/content/assets/other/starter-wardrobe.svg",
+      "iconKey": "wardrobe",
+      "title": "Suggestion from Billie's wardrobe",
+      "subtitle": "Best of Billie",
+      "gradient": {
+        "from": "#020B1C",
+        "to": "#0A214C"
+      },
+      "action": "Show me suggestions from your wardrobe"
+    },
+    {
+      "id": "starter-occasion",
+      "icon": "https://x-stg.glance-cdn.com/public/content/assets/other/starter-occasion.svg",
+      "iconKey": "dressForOccasion",
+      "title": "Dress for Occasion",
+      "subtitle": "Give us your occasion & we take care of rest",
+      "gradient": {
+        "from": "#032F30",
+        "to": "#064C4E"
+      },
+      "action": "Help me dress for an occasion"
+    },
+    {
+      "id": "starter-funk",
+      "icon": "https://x-stg.glance-cdn.com/public/content/assets/other/starter-funk.svg",
+      "iconKey": "funkCollection",
+      "title": "Funk by Billie",
+      "subtitle": "From Billie's latest collection",
+      "gradient": {
+        "from": "#252A05",
+        "to": "#41490B"
+      },
+      "action": "Show me Funk collection"
+    },
+    {
+      "id": "starter-complete",
+      "icon": "https://x-stg.glance-cdn.com/public/content/assets/other/starter-complete.svg",
+      "iconKey": "completeMyLook",
+      "title": "Complete my look",
+      "subtitle": "See what goes with your existing apparel",
+      "gradient": {
+        "from": "#042921",
+        "to": "#054638"
+      },
+      "action": "Help me complete my look"
+    }
+  ]
+}

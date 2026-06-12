@@ -1,0 +1,90 @@
+eu: aiphone
+environment: uat
+serviceName: ai-influencer-web-uat
+
+serviceAccount:
+  create: false
+
+image:
+  repository: us-central1-docker.pkg.dev/platformtools-develop-015a/docker-dev-gar/inmobi-glance/ai-influencer-web
+  pullPolicy: IfNotPresent
+  tag: 'image-resizer-c4be369-224'
+
+deployment:
+  enabled: true
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+    minReplicas: 15
+    maxReplicas: 20
+    targetMemoryUtilizationPercentage: 80
+  env_variables:
+    - name: ENV
+      value: 'staging'
+
+externalsecrets:
+  enabled: false
+
+nameOverride: ''
+fullnameOverride: 'ai-influencer-web-uat'
+containerName: 'ai-influencer-web-uat'
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  port: 8080
+
+internalhttproute:
+  enabled: true
+  gatewayKind: Gateway
+  gatewayName: internal-gateway
+  gatewayNamespace: gateway
+  hostnames:
+    - ai-influencer-web.ailooks-uat.internal.glance.com
+  routes:
+    - path: /
+      backendName: ai-influencer-web-uat
+      backendPort: 8080
+
+externalhttproute:
+  enabled: true
+  gatewayKind: Gateway
+  gatewayName: external-gateway
+  gatewayNamespace: gateway
+  hostnames:
+    - influencers-uat.glance.com
+  routes:
+    - path: /
+      backendName: ai-influencer-web-uat
+      backendPort: 8080
+
+healthcheckpolicy:
+  enabled: true
+  backendServices:
+    - targetServiceName: ai-influencer-web-uat
+      port: 8080
+      requestPath: /api/health
+      checkIntervalSec: 60
+      healthyThreshold: 1
+      timeoutSec: 50
+      unhealthyThreshold: 5
+
+gatewaybackendpolicy:
+  enabled: true
+  backendServices:
+    - targetServiceName: ai-influencer-web-uat
+      timeoutSec: 120
+
+openDevopsHooks:
+  autodeploy_flow: true
+  repository: us-central1-docker.pkg.dev/platformtools-prod-872a/docker-prod-gar
+  application:
+    env: uat
+    name: ai-influencer-web
