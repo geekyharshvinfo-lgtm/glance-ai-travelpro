@@ -6,8 +6,9 @@
   import TravelProWardrobeSection from '$lib/components/travelpro/TravelProWardrobeSection.svelte';
   import TravelProHero from '$lib/components/travelpro/TravelProHero.svelte';
   import Footer from '$lib/components/influencer/Footer.svelte';
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
-  const BACKEND = import.meta.env.PUBLIC_BACKEND_URL || 'http://localhost:3006';
+  const BACKEND = PUBLIC_BACKEND_URL || 'http://localhost:3006';
 
   type TravelProProduct = {
     id: string;
