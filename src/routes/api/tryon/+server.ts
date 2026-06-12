@@ -31,8 +31,13 @@ export const POST: RequestHandler = async ({ request }) => {
         return { data, mimeType };
       }
       const res = await fetch(url, {
-        signal: AbortSignal.timeout(20000),
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bot/1.0)' },
+        signal: AbortSignal.timeout(30000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://www.jcpenney.com/',
+        },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const buf = await res.arrayBuffer();
