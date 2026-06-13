@@ -11,10 +11,6 @@
 
   const BACKEND = PUBLIC_BACKEND_URL || 'http://localhost:3006';
 
-  // Set to false to revert to localStorage (shared across all tabs on same device)
-  const USE_SESSION_STORAGE = true;
-  const selfieStorage = USE_SESSION_STORAGE ? sessionStorage : localStorage;
-
   type TravelProProduct = {
     id: string;
     name: string;
@@ -114,19 +110,11 @@
   );
 
   onMount(async () => {
-    // On a hard refresh (not back-nav), clear everything and redirect to home
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    if (nav?.type === 'reload') {
-      sessionStorage.removeItem('travelpro_selfie');
-      goto('/');
-      return;
-    }
-
     loaderMsgTimer = setInterval(() => {
       loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
     }, 2600);
 
-    const selfie = selfieStorage.getItem('travelpro_selfie');
+    const selfie = localStorage.getItem('travelpro_selfie');
     if (!selfie) { goto('/'); return; }
     selfieDataUrl = selfie;
 
@@ -287,7 +275,7 @@
   });
 
   function recapture() {
-    selfieStorage.removeItem('travelpro_selfie');
+    localStorage.removeItem('travelpro_selfie');
     goto('/');
   }
 </script>
