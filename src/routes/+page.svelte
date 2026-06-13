@@ -68,10 +68,14 @@
     mode = 'intro';
   }
 
+  // Set to false to revert to localStorage (shared across all tabs on same device)
+  const USE_SESSION_STORAGE = true;
+  const selfieStorage = USE_SESSION_STORAGE ? sessionStorage : localStorage;
+
   async function buildStore() {
     if (!selfieDataUrl) return;
     isLoading = true;
-    localStorage.setItem('travelpro_selfie', selfieDataUrl);
+    selfieStorage.setItem('travelpro_selfie', selfieDataUrl);
     goto('/travelpro');
   }
 </script>

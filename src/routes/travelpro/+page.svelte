@@ -11,6 +11,10 @@
 
   const BACKEND = PUBLIC_BACKEND_URL || 'http://localhost:3006';
 
+  // Set to false to revert to localStorage (shared across all tabs on same device)
+  const USE_SESSION_STORAGE = true;
+  const selfieStorage = USE_SESSION_STORAGE ? sessionStorage : localStorage;
+
   type TravelProProduct = {
     id: string;
     name: string;
@@ -114,7 +118,7 @@
       loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
     }, 2600);
 
-    const selfie = localStorage.getItem('travelpro_selfie');
+    const selfie = selfieStorage.getItem('travelpro_selfie');
     if (!selfie) { goto('/'); return; }
     selfieDataUrl = selfie;
 
@@ -275,7 +279,7 @@
   });
 
   function recapture() {
-    localStorage.removeItem('travelpro_selfie');
+    selfieStorage.removeItem('travelpro_selfie');
     goto('/');
   }
 </script>
