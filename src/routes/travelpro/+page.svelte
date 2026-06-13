@@ -134,7 +134,6 @@
         try { sessionStorage.setItem('tp_catalogue', JSON.stringify(data)); } catch {}
       }
       collections = data.collections ?? [];
-      loadingCatalogue = false;
 
       // Init cards — restore from sessionStorage cache if available
       const initMap = new Map<string, GeneratedCard>();
@@ -155,9 +154,15 @@
         heroStatus = 'done';
       }
 
-      // Only generate what isn't cached
+      loadingCatalogue = false;
+
+      // If everything is fully cached, reveal immediately — skip loader entirely
       const anyPending = [...initMap.values()].some(c => c.status === 'pending');
-      if (anyPending || heroStatus !== 'done') generateAll();
+      if (!anyPending && heroStatus === 'done') {
+        revealed = true;
+      } else {
+        generateAll();
+      }
     } catch {
       error = 'Failed to load catalogue.';
       loadingCatalogue = false;
