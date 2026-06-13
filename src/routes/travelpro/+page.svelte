@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
   import { goto } from '$app/navigation';
   import { GlanceGLogoIcon } from '$lib/components/icons';
   import type { WardrobeSection, LatestSection } from '$lib/types';
@@ -110,6 +111,10 @@
   );
 
   onMount(async () => {
+    loaderMsgTimer = setInterval(() => {
+      loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
+    }, 2600);
+
     const selfie = localStorage.getItem('travelpro_selfie');
     if (!selfie) { goto('/'); return; }
     selfieDataUrl = selfie;
@@ -233,6 +238,43 @@
   const doneCount = $derived([...generatedCards.values()].filter(c => c.status === 'done' || c.status === 'error').length);
   const totalCount = $derived(generatedCards.size);
 
+  // Gate the whole page behind the loader until catalogue is loaded, the hero is
+  // resolved, and every product card has finished generating (done or errored).
+  const heroResolved = $derived(heroStatus === 'done' || heroStatus === 'error');
+  const allCardsResolved = $derived(totalCount > 0 && doneCount === totalCount);
+  const everythingReady = $derived(!loadingCatalogue && !error && heroResolved && allCardsResolved);
+
+  // Smooth, capped progress for the loader bar (0–100). Reflects real generation
+  // progress but never sits at a dead 0 while the catalogue is still loading.
+  const loaderPct = $derived(
+    loadingCatalogue
+      ? 6
+      : totalCount === 0
+        ? 12
+        : Math.min(99, 12 + Math.round((doneCount / totalCount) * 88))
+  );
+
+  // Rotating tagline shown under the loader.
+  const loaderMessages = [
+    'Curating your Riviera wardrobe…',
+    'Styling each look on La Croisette…',
+    'Setting the Mediterranean light…',
+    'Polishing every detail…',
+    'Almost ready for your close-up…',
+  ];
+  let loaderMsgIndex = $state(0);
+  let loaderMsgTimer: ReturnType<typeof setInterval> | undefined;
+
+  // Reveal the page only once, so it doesn't flicker if counts briefly change.
+  let revealed = $state(false);
+  $effect(() => {
+    if (everythingReady) revealed = true;
+  });
+
+  onDestroy(() => {
+    if (loaderMsgTimer) clearInterval(loaderMsgTimer);
+  });
+
   function recapture() {
     localStorage.removeItem('travelpro_selfie');
     goto('/');
@@ -244,73 +286,101 @@
 </svelte:head>
 
 <div class="page">
-  <!-- Fixed top nav — exact same style as influencer HeroSection -->
-  <header class="top-nav">
-    <button class="top-nav-logo" onclick={recapture} aria-label="Recapture selfie" title="Take new selfie">
-      <GlanceGLogoIcon width={23} height={30} />
-    </button>
-
-    <div class="store-title">
-      <span class="store-name">TravelPro Store</span>
-      {#if doneCount < totalCount && !loadingCatalogue}
-        <span class="gen-counter">Generating {doneCount}/{totalCount}</span>
-      {/if}
-    </div>
-
-    <button class="recapture-btn" onclick={recapture} aria-label="New selfie">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-      </svg>
-    </button>
-  </header>
-
-  <!-- Progress bar -->
-  {#if doneCount < totalCount && !loadingCatalogue}
-    <div class="progress-track">
-      <div class="progress-fill" style="width: {totalCount ? (doneCount / totalCount) * 100 : 0}%"></div>
-    </div>
-  {/if}
-
-  {#if loadingCatalogue}
-    <div class="full-loader">
-      <div class="loader-ring"></div>
-      <p>Loading your store…</p>
-    </div>
-  {:else if error}
+  {#if error}
+    <!-- Error state -->
     <div class="full-loader">
       <p class="err-text">{error}</p>
       <button class="white-btn" onclick={() => goto('/')}>Go Back</button>
     </div>
+  {:else if !revealed}
+    <!-- Full-screen premium loader — stays until hero + every card is generated -->
+    <div class="brand-loader" out:fade={{ duration: 600 }}>
+      <div class="loader-aurora"></div>
+      <div class="loader-grain"></div>
+
+      <div class="loader-content">
+        <div class="loader-mark">
+          <span class="loader-logo-glow"><GlanceGLogoIcon width={34} height={44} /></span>
+          <div class="loader-orbit">
+            <span class="orbit-dot"></span>
+            <span class="orbit-dot"></span>
+            <span class="orbit-dot"></span>
+          </div>
+        </div>
+
+        <h1 class="loader-brand">TravelPro</h1>
+        <p class="loader-kicker">French Riviera Collection</p>
+
+        <div class="loader-bar">
+          <div class="loader-bar-fill" style="width: {loaderPct}%"></div>
+          <div class="loader-bar-shimmer"></div>
+        </div>
+
+        <div class="loader-status">
+          <span class="loader-msg" >
+            {#key loaderMsgIndex}
+              <span in:fade={{ duration: 500 }}>{loaderMessages[loaderMsgIndex]}</span>
+            {/key}
+          </span>
+          <span class="loader-count">
+            {#if loadingCatalogue}
+              Preparing
+            {:else}
+              {doneCount} / {totalCount}
+            {/if}
+          </span>
+        </div>
+      </div>
+    </div>
   {:else}
-    <!-- Hero section -->
-    <TravelProHero
-      generatedUrl={heroGenerated}
-      status={heroStatus}
-      selfieDataUrl={selfieDataUrl}
-    />
+    <div in:fade={{ duration: 700, delay: 150 }}>
+      <!-- Fixed top nav — exact same style as influencer HeroSection -->
+      <header class="top-nav">
+        <button class="top-nav-logo" onclick={recapture} aria-label="Recapture selfie" title="Take new selfie">
+          <GlanceGLogoIcon width={23} height={30} />
+        </button>
 
-    <!-- One section per collection — editorial (look) UI or horizontal grid -->
-    {#each builtSections() as section (section.id)}
-      {#if section.type === 'editorial'}
-        <TravelProEditorialSection latestSection={section} />
-      {:else}
-        <TravelProWardrobeSection wardrobeSection={section} />
-      {/if}
-    {/each}
+        <div class="store-title">
+          <span class="store-name">TravelPro Store</span>
+        </div>
 
-    <Footer footerData={{
-      googlePlayLink: 'https://play.google.com/store/apps/details?id=com.glance.internet',
-      appStoreLink: 'https://apps.apple.com/app/glance-ai/id6469480822',
-      oneLinkUrl: 'https://glance.onelink.me/IpRQ/jq73oi7q',
-      privacyPolicyLink: 'https://www.travelpro.com/pages/privacy-policy',
-      termsOfServiceLink: 'https://www.travelpro.com/pages/terms-and-conditions',
-      instagramLink: 'https://www.instagram.com/travelpro_us',
-      linkedInLink: '',
-      twitterLink: '',
-      youtubeLink: '',
-      copyrightText: '© 2025 TravelPro. All rights reserved.',
-    }} />
+        <button class="recapture-btn" onclick={recapture} aria-label="New selfie">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Hero section -->
+      <TravelProHero
+        generatedUrl={heroGenerated}
+        status={heroStatus}
+        selfieDataUrl={selfieDataUrl}
+      />
+
+      <!-- One section per collection — editorial (look) UI or horizontal grid -->
+      {#each builtSections() as section (section.id)}
+        {#if section.type === 'editorial'}
+          <TravelProEditorialSection latestSection={section} />
+        {:else}
+          <TravelProWardrobeSection wardrobeSection={section} />
+        {/if}
+      {/each}
+
+      <Footer footerData={{
+        googlePlayLink: 'https://play.google.com/store/apps/details?id=com.glance.internet',
+        appStoreLink: 'https://apps.apple.com/app/glance-ai/id6469480822',
+        oneLinkUrl: 'https://glance.onelink.me/IpRQ/jq73oi7q',
+        privacyPolicyLink: 'https://www.travelpro.com/pages/privacy-policy',
+        termsOfServiceLink: 'https://www.travelpro.com/pages/terms-and-conditions',
+        instagramLink: 'https://www.instagram.com/travelpro_us',
+        linkedInLink: '',
+        twitterLink: '',
+        youtubeLink: '',
+        copyrightText: '© 2025 TravelPro. All rights reserved.',
+      }} />
+    </div>
   {/if}
 </div>
 
@@ -318,6 +388,212 @@
   .page {
     min-height: 100dvh;
     background: #111;
+  }
+
+  /* ─── Premium full-screen loader ─────────────────────────────────────────── */
+  .brand-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 120% at 50% -10%, #1c2438 0%, #0d1018 55%, #07090e 100%);
+    max-width: 475px;
+    margin: 0 auto;
+  }
+
+  /* Slow drifting aurora wash — Riviera sea-and-gold */
+  .loader-aurora {
+    position: absolute;
+    inset: -40%;
+    background:
+      radial-gradient(40% 35% at 30% 30%, rgba(118, 90, 234, 0.38), transparent 70%),
+      radial-gradient(38% 30% at 72% 40%, rgba(64, 156, 214, 0.34), transparent 70%),
+      radial-gradient(45% 40% at 55% 78%, rgba(212, 95, 218, 0.26), transparent 72%),
+      radial-gradient(30% 28% at 18% 75%, rgba(243, 196, 107, 0.22), transparent 70%);
+    filter: blur(18px);
+    animation: aurora-drift 14s ease-in-out infinite alternate;
+  }
+
+  @keyframes aurora-drift {
+    0%   { transform: translate3d(-4%, -2%, 0) scale(1); }
+    50%  { transform: translate3d(3%, 2%, 0) scale(1.08); }
+    100% { transform: translate3d(-2%, 4%, 0) scale(1.04); }
+  }
+
+  /* Subtle film grain to make it feel editorial, not flat */
+  .loader-grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .loader-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 2rem;
+    width: 100%;
+    max-width: 22rem;
+    text-align: center;
+  }
+
+  /* Logo with orbiting dots */
+  .loader-mark {
+    position: relative;
+    width: 6rem;
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.75rem;
+  }
+
+  .loader-logo-glow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 14px rgba(118, 90, 234, 0.7));
+    animation: logo-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes logo-pulse {
+    0%, 100% { transform: scale(1);    opacity: 0.92; }
+    50%      { transform: scale(1.08); opacity: 1; }
+  }
+
+  .loader-orbit {
+    position: absolute;
+    inset: 0;
+    animation: orbit-spin 3.6s linear infinite;
+  }
+
+  .orbit-dot {
+    position: absolute;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+    top: 50%;
+    left: 50%;
+    margin: -0.2rem;
+  }
+  .orbit-dot:nth-child(1) { transform: rotate(0deg)   translateX(3rem); opacity: 0.95; }
+  .orbit-dot:nth-child(2) { transform: rotate(120deg) translateX(3rem); opacity: 0.55; background: #d45fda; }
+  .orbit-dot:nth-child(3) { transform: rotate(240deg) translateX(3rem); opacity: 0.7;  background: #409cd6; }
+
+  @keyframes orbit-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loader-brand {
+    font-family: 'Abril Fatface', serif;
+    font-size: 2.25rem;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: 0.01em;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .loader-kicker {
+    margin: 0.5rem 0 0;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Progress bar */
+  .loader-bar {
+    position: relative;
+    width: 100%;
+    height: 3px;
+    margin-top: 2.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+  }
+
+  .loader-bar-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #765aea, #409cd6 55%, #d45fda);
+    box-shadow: 0 0 12px rgba(118, 90, 234, 0.7);
+    transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .loader-bar-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.45),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: bar-shimmer 1.8s ease-in-out infinite;
+  }
+
+  @keyframes bar-shimmer {
+    0%   { transform: translateX(-100%); }
+    60%  { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .loader-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    min-height: 2.5rem;
+  }
+
+  .loader-msg {
+    position: relative;
+    display: block;
+    height: 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .loader-msg > span {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .loader-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .loader-aurora,
+    .loader-logo-glow,
+    .loader-orbit,
+    .loader-bar-shimmer {
+      animation: none;
+    }
   }
 
   /* Exact copy of .top-nav from HeroSection.svelte */
