@@ -123,8 +123,16 @@
     selfieDataUrl = selfie;
 
     try {
-      const res = await fetch(`${BACKEND}/api/catalogue`);
-      const data = await res.json();
+      // Restore catalogue from cache if available — skips Railway fetch entirely
+      const cachedCatalogue = sessionStorage.getItem('tp_catalogue');
+      let data: { collections: TravelProCollection[] };
+      if (cachedCatalogue) {
+        data = JSON.parse(cachedCatalogue);
+      } else {
+        const res = await fetch(`${BACKEND}/api/catalogue`);
+        data = await res.json();
+        try { sessionStorage.setItem('tp_catalogue', JSON.stringify(data)); } catch {}
+      }
       collections = data.collections ?? [];
       loadingCatalogue = false;
 
@@ -295,8 +303,8 @@
 
   function recapture() {
     selfieStorage.removeItem('travelpro_selfie');
-    // Clear all cached generated images so the next user starts fresh
-    const keysToRemove = Object.keys(sessionStorage).filter(k => k.startsWith('tp_img_'));
+    // Clear all cached data so the next user starts fresh
+    const keysToRemove = Object.keys(sessionStorage).filter(k => k.startsWith('tp_img_') || k === 'tp_catalogue');
     keysToRemove.forEach(k => sessionStorage.removeItem(k));
     goto('/');
   }

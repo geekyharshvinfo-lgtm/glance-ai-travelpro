@@ -12,12 +12,20 @@
   let selfieDataUrl = $state<string | null>(null);
   let isLoading = $state(false);
 
+  function clearStoreCache() {
+    const keysToRemove = Object.keys(sessionStorage).filter(k => k.startsWith('tp_img_') || k === 'tp_catalogue');
+    keysToRemove.forEach(k => sessionStorage.removeItem(k));
+    sessionStorage.removeItem('travelpro_selfie');
+  }
+
   function triggerCamera() {
+    clearStoreCache();
     mode = 'camera';
     setOnboardingStep('camera');
   }
 
   function triggerFileInput() {
+    clearStoreCache();
     fileInput?.click();
   }
 
