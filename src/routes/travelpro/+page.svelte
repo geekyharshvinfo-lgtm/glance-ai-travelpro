@@ -2,7 +2,6 @@
   import { onMount, onDestroy } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { goto } from '$app/navigation';
-  import { GlanceGLogoIcon } from '$lib/components/icons';
   import type { WardrobeSection, LatestSection } from '$lib/types';
   import TravelProWardrobeSection from '$lib/components/travelpro/TravelProWardrobeSection.svelte';
   import TravelProEditorialSection from '$lib/components/travelpro/TravelProEditorialSection.svelte';
@@ -300,16 +299,13 @@
 
       <div class="loader-content">
         <div class="loader-mark">
-          <span class="loader-logo-glow"><GlanceGLogoIcon width={34} height={44} /></span>
-          <div class="loader-orbit">
-            <span class="orbit-dot"></span>
-            <span class="orbit-dot"></span>
-            <span class="orbit-dot"></span>
-          </div>
+          <span class="loader-logo-glow">
+            <img src="/glance-logo.svg" alt="Glance" class="loader-logo-img" />
+          </span>
         </div>
 
-        <h1 class="loader-brand">TravelPro</h1>
-        <p class="loader-kicker">French Riviera Collection</p>
+        <h1 class="loader-brand">Travel Pro x Glance</h1>
+        <p class="loader-kicker">Building your brand store</p>
 
         <div class="loader-bar">
           <div class="loader-bar-fill" style="width: {loaderPct}%"></div>
@@ -337,7 +333,7 @@
       <!-- Fixed top nav — exact same style as influencer HeroSection -->
       <header class="top-nav">
         <button class="top-nav-logo" onclick={recapture} aria-label="Recapture selfie" title="Take new selfie">
-          <GlanceGLogoIcon width={23} height={30} />
+          <img src="/glance-logo.svg" alt="Glance" class="top-nav-logo-img" />
         </button>
 
         <div class="store-title">
@@ -445,11 +441,9 @@
     text-align: center;
   }
 
-  /* Logo with orbiting dots */
+  /* Logo */
   .loader-mark {
     position: relative;
-    width: 6rem;
-    height: 6rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -460,55 +454,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    filter: drop-shadow(0 0 14px rgba(118, 90, 234, 0.7));
+    filter: drop-shadow(0 0 16px rgba(118, 90, 234, 0.7));
     animation: logo-pulse 2.4s ease-in-out infinite;
+  }
+
+  .loader-logo-img {
+    width: 3.5rem;
+    height: auto;
+    display: block;
   }
 
   @keyframes logo-pulse {
     0%, 100% { transform: scale(1);    opacity: 0.92; }
-    50%      { transform: scale(1.08); opacity: 1; }
-  }
-
-  .loader-orbit {
-    position: absolute;
-    inset: 0;
-    animation: orbit-spin 3.6s linear infinite;
-  }
-
-  .orbit-dot {
-    position: absolute;
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
-    top: 50%;
-    left: 50%;
-    margin: -0.2rem;
-  }
-  .orbit-dot:nth-child(1) { transform: rotate(0deg)   translateX(3rem); opacity: 0.95; }
-  .orbit-dot:nth-child(2) { transform: rotate(120deg) translateX(3rem); opacity: 0.55; background: #d45fda; }
-  .orbit-dot:nth-child(3) { transform: rotate(240deg) translateX(3rem); opacity: 0.7;  background: #409cd6; }
-
-  @keyframes orbit-spin {
-    to { transform: rotate(360deg); }
+    50%      { transform: scale(1.06); opacity: 1; }
   }
 
   .loader-brand {
     font-family: 'Abril Fatface', serif;
-    font-size: 2.25rem;
+    font-size: 1.6rem;
     font-weight: 400;
     color: #fff;
     letter-spacing: 0.01em;
     margin: 0;
-    line-height: 1;
+    line-height: 1.1;
+    white-space: nowrap;
   }
 
   .loader-kicker {
     margin: 0.5rem 0 0;
     font-size: 0.7rem;
     font-weight: 500;
-    letter-spacing: 0.32em;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.5);
   }
@@ -590,7 +566,6 @@
   @media (prefers-reduced-motion: reduce) {
     .loader-aurora,
     .loader-logo-glow,
-    .loader-orbit,
     .loader-bar-shimmer {
       animation: none;
     }
@@ -619,6 +594,14 @@
     align-items: center;
     background: none;
     cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .top-nav-logo-img {
+    height: 1.75rem;
+    width: auto;
+    display: block;
   }
 
   .store-title {

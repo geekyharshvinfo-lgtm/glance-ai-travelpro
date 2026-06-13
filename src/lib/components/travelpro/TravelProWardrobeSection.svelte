@@ -85,12 +85,13 @@
 
   .scroll-x {
     display: flex;
-    gap: 1rem;
-    padding: 0 1rem;
+    gap: 1.25rem;
+    padding: 0 1.25rem;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
     scroll-snap-type: x mandatory;
+    scroll-padding-left: 1.25rem;
   }
 
   .scroll-x::-webkit-scrollbar {

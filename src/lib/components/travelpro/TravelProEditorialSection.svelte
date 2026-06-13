@@ -114,26 +114,23 @@
   }
 
   .section-title {
-    font-family: 'Abril Fatface';
-    font-size: 1.5rem;
+    font-family: 'Playfair Display';
     font-weight: 400;
-    font-style: Regular;
+    font-size: 1.5rem;
     line-height: 120%;
-    letter-spacing: 0%;
     text-align: center;
-    vertical-align: middle;
-    text-decoration: underline;
-    text-underline-offset: 4px;
     color: white;
+    opacity: 0.6;
+    text-transform: uppercase;
   }
 
   .section-subtitle {
-    font-size: 1rem;
-    font-weight: 500;
-    font-style: Medium;
-    letter-spacing: 0%;
+    color: #fff;
     text-align: center;
-    color: rgba(255, 255, 255, 1);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    opacity: 0.8;
   }
 
   .products-row {
