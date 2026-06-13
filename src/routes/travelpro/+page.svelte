@@ -2,8 +2,9 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { GlanceGLogoIcon } from '$lib/components/icons';
-  import type { WardrobeSection } from '$lib/types';
+  import type { WardrobeSection, LatestSection } from '$lib/types';
   import TravelProWardrobeSection from '$lib/components/travelpro/TravelProWardrobeSection.svelte';
+  import TravelProEditorialSection from '$lib/components/travelpro/TravelProEditorialSection.svelte';
   import TravelProHero from '$lib/components/travelpro/TravelProHero.svelte';
   import Footer from '$lib/components/influencer/Footer.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
@@ -25,6 +26,7 @@
     id: string;
     name: string;
     tagline: string;
+    uiStyle?: 'editorial' | 'grid';
     products: TravelProProduct[];
   };
 
@@ -43,35 +45,68 @@
   let loadingCatalogue = $state(true);
   let error = $state('');
 
-  // Build WardrobeSections from collections
-  const wardrobeSections = $derived((): WardrobeSection[] =>
-    collections.map((col, ci) => ({
-      id: `tp-${col.id}`,
-      type: 'product_grid' as const,
-      title: col.name,
-      subtitle: col.tagline,
-      backgroundImage: '',
-      viewAll: false,
-      priority: ci,
-      items: col.products.map((p) => {
-        const card = generatedCards.get(p.id);
+  // Build sections from collections — editorial (look) UI for uiStyle === 'editorial',
+  // otherwise the horizontal product grid. Both read generated images from generatedCards.
+  const builtSections = $derived((): (WardrobeSection | LatestSection)[] =>
+    collections.map((col, ci) => {
+      if (col.uiStyle === 'editorial') {
         return {
-          id: p.id,
-          collectionImage: card?.generatedUrl ?? p.imageUrl,
-          title: p.name,
-          price: p.price,
-          redirectUrl: p.redirectUrl,
-          products: [{
+          id: `tp-${col.id}`,
+          type: 'editorial' as const,
+          title: col.name,
+          subtitle: col.tagline,
+          priority: ci,
+          items: col.products.map((p) => {
+            const card = generatedCards.get(p.id);
+            return {
+              id: p.id,
+              collectionImage: card?.generatedUrl ?? p.imageUrl,
+              title: p.name,
+              description: p.description,
+              date: '',
+              price: p.price,
+              brand: { name: 'TravelPro', logo: null },
+              products: [{
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                image: p.imageUrl,
+                redirectUrl: p.redirectUrl,
+                brand: { name: 'TravelPro', logo: null },
+              }],
+            };
+          }),
+        } satisfies LatestSection;
+      }
+
+      return {
+        id: `tp-${col.id}`,
+        type: 'product_grid' as const,
+        title: col.name,
+        subtitle: col.tagline,
+        backgroundImage: '',
+        viewAll: false,
+        priority: ci,
+        items: col.products.map((p) => {
+          const card = generatedCards.get(p.id);
+          return {
             id: p.id,
-            name: p.name,
+            collectionImage: card?.generatedUrl ?? p.imageUrl,
+            title: p.name,
             price: p.price,
-            image: p.imageUrl,
             redirectUrl: p.redirectUrl,
-            brand: { id: 'travelpro', name: 'TravelPro' },
-          }],
-        };
-      }),
-    }))
+            products: [{
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              image: p.imageUrl,
+              redirectUrl: p.redirectUrl,
+              brand: { name: 'TravelPro', logo: null },
+            }],
+          };
+        }),
+      } satisfies WardrobeSection;
+    })
   );
 
   onMount(async () => {
@@ -139,6 +174,7 @@
           productName: collections[0].products[0].name,
           category: collections[0].products[0].category,
           collectionName: collections[0].name,
+          collectionId: collections[0].id,
           promptType: 'hero',
           locationIdx: 0,
           extraProductImageUrls,
@@ -173,6 +209,7 @@
           productName: product.name,
           category: product.category,
           collectionName: collection.name,
+          collectionId: collection.id,
           promptType: 'collection',
           locationIdx: idx,
         }),
@@ -253,9 +290,13 @@
       selfieDataUrl={selfieDataUrl}
     />
 
-    <!-- One WardrobeSection per collection — exact same component -->
-    {#each wardrobeSections() as section (section.id)}
-      <TravelProWardrobeSection wardrobeSection={section} />
+    <!-- One section per collection — editorial (look) UI or horizontal grid -->
+    {#each builtSections() as section (section.id)}
+      {#if section.type === 'editorial'}
+        <TravelProEditorialSection latestSection={section} />
+      {:else}
+        <TravelProWardrobeSection wardrobeSection={section} />
+      {/if}
     {/each}
 
     <Footer footerData={{

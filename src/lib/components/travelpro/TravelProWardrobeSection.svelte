@@ -18,7 +18,7 @@
     <p class="section-subtitle">{wardrobeSection.subtitle}</p>
   </div>
   <div class="scroll-x">
-    {#each wardrobeSection.items.slice(0, 2) as item (item.id)}
+    {#each wardrobeSection.items.slice(0, 3) as item (item.id)}
       <div class="wardrobe-item">
         <div class="item-thumb">
           <img
@@ -85,15 +85,23 @@
 
   .scroll-x {
     display: flex;
-    justify-content: center;
     gap: 1rem;
     padding: 0 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+  }
+
+  .scroll-x::-webkit-scrollbar {
+    display: none;
   }
 
   .wardrobe-item {
-    flex: 1;
-    max-width: 10.5rem;
+    flex: 0 0 9.5rem;
+    width: 9.5rem;
     min-width: 0;
+    scroll-snap-align: start;
   }
 
   .item-thumb {
