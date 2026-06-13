@@ -41,12 +41,34 @@
     status: 'pending' | 'generating' | 'done' | 'error';
   };
 
+  // Pre-check cache synchronously before first render so we can skip the loader entirely
+  function checkFullCache(): { collections: TravelProCollection[]; generatedCards: Map<string, GeneratedCard>; heroGenerated: string | null } | null {
+    try {
+      const cachedCatalogue = sessionStorage.getItem('tp_catalogue');
+      const cachedHero = sessionStorage.getItem('tp_img_hero');
+      if (!cachedCatalogue || !cachedHero) return null;
+      const data = JSON.parse(cachedCatalogue) as { collections: TravelProCollection[] };
+      const cols = data.collections ?? [];
+      const map = new Map<string, GeneratedCard>();
+      for (const col of cols) {
+        for (const p of col.products) {
+          const img = sessionStorage.getItem(`tp_img_${p.id}`);
+          if (!img) return null; // not fully cached
+          map.set(p.id, { productId: p.id, generatedUrl: img, status: 'done' });
+        }
+      }
+      return { collections: cols, generatedCards: map, heroGenerated: cachedHero };
+    } catch { return null; }
+  }
+
+  const _preloaded = typeof sessionStorage !== 'undefined' ? checkFullCache() : null;
+
   let selfieDataUrl = $state<string | null>(null);
-  let collections = $state<TravelProCollection[]>([]);
-  let generatedCards = $state<Map<string, GeneratedCard>>(new Map());
-  let heroGenerated = $state<string | null>(null);
-  let heroStatus = $state<'pending' | 'generating' | 'done' | 'error'>('pending');
-  let loadingCatalogue = $state(true);
+  let collections = $state<TravelProCollection[]>(_preloaded?.collections ?? []);
+  let generatedCards = $state<Map<string, GeneratedCard>>(_preloaded?.generatedCards ?? new Map());
+  let heroGenerated = $state<string | null>(_preloaded?.heroGenerated ?? null);
+  let heroStatus = $state<'pending' | 'generating' | 'done' | 'error'>(_preloaded ? 'done' : 'pending');
+  let loadingCatalogue = $state(_preloaded ? false : true);
   let error = $state('');
 
   // Build sections from collections — editorial (look) UI for uiStyle === 'editorial',
@@ -114,55 +136,33 @@
   );
 
   onMount(async () => {
-    loaderMsgTimer = setInterval(() => {
-      loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
-    }, 2600);
-
     const selfie = selfieStorage.getItem('travelpro_selfie');
     if (!selfie) { goto('/'); return; }
     selfieDataUrl = selfie;
 
-    try {
-      // Restore catalogue from cache if available — skips Railway fetch entirely
-      const cachedCatalogue = sessionStorage.getItem('tp_catalogue');
-      let data: { collections: TravelProCollection[] };
-      if (cachedCatalogue) {
-        data = JSON.parse(cachedCatalogue);
-      } else {
-        const res = await fetch(`${BACKEND}/api/catalogue`);
-        data = await res.json();
-        try { sessionStorage.setItem('tp_catalogue', JSON.stringify(data)); } catch {}
-      }
-      collections = data.collections ?? [];
+    // If fully pre-loaded from cache, nothing left to do
+    if (_preloaded) return;
 
-      // Init cards — restore from sessionStorage cache if available
+    loaderMsgTimer = setInterval(() => {
+      loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
+    }, 2600);
+
+    try {
+      const res = await fetch(`${BACKEND}/api/catalogue`);
+      const data = await res.json();
+      try { sessionStorage.setItem('tp_catalogue', JSON.stringify(data)); } catch {}
+      collections = data.collections ?? [];
+      loadingCatalogue = false;
+
       const initMap = new Map<string, GeneratedCard>();
       for (const col of collections) {
         for (const p of col.products) {
-          const cached = sessionStorage.getItem(`tp_img_${p.id}`);
-          initMap.set(p.id, cached
-            ? { productId: p.id, generatedUrl: cached, status: 'done' }
-            : { productId: p.id, generatedUrl: null, status: 'pending' });
+          initMap.set(p.id, { productId: p.id, generatedUrl: null, status: 'pending' });
         }
       }
       generatedCards = initMap;
 
-      // Restore hero from cache if available
-      const cachedHero = sessionStorage.getItem('tp_img_hero');
-      if (cachedHero) {
-        heroGenerated = cachedHero;
-        heroStatus = 'done';
-      }
-
-      loadingCatalogue = false;
-
-      // If everything is fully cached, reveal immediately — skip loader entirely
-      const anyPending = [...initMap.values()].some(c => c.status === 'pending');
-      if (!anyPending && heroStatus === 'done') {
-        revealed = true;
-      } else {
-        generateAll();
-      }
+      generateAll();
     } catch {
       error = 'Failed to load catalogue.';
       loadingCatalogue = false;
@@ -297,7 +297,8 @@
   let loaderMsgTimer: ReturnType<typeof setInterval> | undefined;
 
   // Reveal the page only once, so it doesn't flicker if counts briefly change.
-  let revealed = $state(false);
+  // Start revealed=true immediately if everything was pre-loaded from cache.
+  let revealed = $state(_preloaded !== null);
   $effect(() => {
     if (everythingReady) revealed = true;
   });
