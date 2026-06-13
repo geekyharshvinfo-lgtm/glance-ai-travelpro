@@ -110,6 +110,14 @@
   );
 
   onMount(async () => {
+    // On hard refresh, clear everything and send back to capture page
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type === 'reload') {
+      localStorage.removeItem('travelpro_selfie');
+      goto('/');
+      return;
+    }
+
     loaderMsgTimer = setInterval(() => {
       loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
     }, 2600);
