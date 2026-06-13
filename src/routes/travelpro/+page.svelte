@@ -7,7 +7,6 @@
   import TravelProEditorialSection from '$lib/components/travelpro/TravelProEditorialSection.svelte';
   import TravelProHero from '$lib/components/travelpro/TravelProHero.svelte';
   import Lightbox from '$lib/components/travelpro/Lightbox.svelte';
-  import Footer from '$lib/components/influencer/Footer.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
   const BACKEND = PUBLIC_BACKEND_URL || 'http://localhost:3006';
@@ -340,7 +339,7 @@
         </button>
 
         <div class="store-title">
-          <span class="store-name">TravelPro Store</span>
+          <span class="store-name">Travel Pro x Glance</span>
         </div>
 
         <button class="recapture-btn" onclick={recapture} aria-label="New selfie">
@@ -366,19 +365,6 @@
           <TravelProWardrobeSection wardrobeSection={section} />
         {/if}
       {/each}
-
-      <Footer footerData={{
-        googlePlayLink: 'https://play.google.com/store/apps/details?id=com.glance.internet',
-        appStoreLink: 'https://apps.apple.com/app/glance-ai/id6469480822',
-        oneLinkUrl: 'https://glance.onelink.me/IpRQ/jq73oi7q',
-        privacyPolicyLink: 'https://www.travelpro.com/pages/privacy-policy',
-        termsOfServiceLink: 'https://www.travelpro.com/pages/terms-and-conditions',
-        instagramLink: 'https://www.instagram.com/travelpro_us',
-        linkedInLink: '',
-        twitterLink: '',
-        youtubeLink: '',
-        copyrightText: '© 2025 TravelPro. All rights reserved.',
-      }} />
     </div>
   {/if}
 </div>
