@@ -282,6 +282,22 @@
     selfieStorage.removeItem('travelpro_selfie');
     goto('/');
   }
+
+  // Restore state on back-button navigation so images don't re-generate
+  export const snapshot = {
+    capture: () => ({
+      heroGenerated,
+      heroStatus,
+      revealed,
+      cards: [...generatedCards.entries()],
+    }),
+    restore: (s: { heroGenerated: string | null; heroStatus: typeof heroStatus; revealed: boolean; cards: [string, GeneratedCard][] }) => {
+      heroGenerated = s.heroGenerated;
+      heroStatus = s.heroStatus;
+      revealed = s.revealed;
+      generatedCards = new Map(s.cards);
+    },
+  };
 </script>
 
 <svelte:head>
