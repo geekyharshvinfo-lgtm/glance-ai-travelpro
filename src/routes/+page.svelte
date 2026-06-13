@@ -349,16 +349,22 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .view-store-btn {
-    margin-top: 1.25rem;
     width: 100%;
-    padding: 0.875rem 1.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
+    max-width: 300px;
+    padding: 19.5px 30px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.1em;
+    text-transform: uppercase;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.25rem;
     border: 1px solid rgba(118, 90, 234, 0.6);
-    background: rgba(118, 90, 234, 0.15);
-    color: rgba(255, 255, 255, 0.85);
+    background: rgba(118, 90, 234, 0.18);
+    color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
   }
 </style>
