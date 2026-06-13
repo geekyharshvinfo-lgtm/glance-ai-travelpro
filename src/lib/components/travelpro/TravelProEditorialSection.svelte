@@ -4,6 +4,7 @@
   import { useHorizontalScrollRestore } from '$lib/utils/useHorizontalScrollRestore';
   import OptimizedImage from '../common/OptimizedImage.svelte';
   import { useScrollPreloader } from '$lib/utils/useScrollPreloader.svelte';
+  import { openLightbox } from '$lib/stores/lightbox.svelte';
 
   interface TravelProEditorialSectionProps {
     latestSection: LatestSection;
@@ -50,13 +51,19 @@
     <div class="products-scroll" bind:this={productsScroll} onscroll={handleScroll}>
       {#each latestSection.items as item, index (item.id)}
         <div class="product-card" data-item-id={item.id} data-preload-url={optimizedUrls[item.id]}>
-          <TryOnImageContainer
-            {item}
-            variant="latest"
-            onOptimizedUrl={(url) => { optimizedUrls[item.id] = url; }}
-            sectionName={latestSection.title}
-            cardIndex={index}
-          />
+          <button
+            class="editorial-img-btn"
+            onclick={() => openLightbox(item.collectionImage ?? item.products?.[0]?.image, item.title)}
+            aria-label="View {item.title} full screen"
+          >
+            <TryOnImageContainer
+              {item}
+              variant="latest"
+              onOptimizedUrl={(url) => { optimizedUrls[item.id] = url; }}
+              sectionName={latestSection.title}
+              cardIndex={index}
+            />
+          </button>
           <div class="product-info">
             <p class="product-description">
               {item.description}
@@ -170,6 +177,15 @@
     justify-content: center;
     position: relative;
     scroll-snap-align: center;
+  }
+
+  .editorial-img-btn {
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    display: block;
   }
 
   .product-image-link {

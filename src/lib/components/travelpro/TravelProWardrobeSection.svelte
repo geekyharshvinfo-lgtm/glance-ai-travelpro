@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { WardrobeSection } from '$lib/types';
+  import { openLightbox } from '$lib/stores/lightbox.svelte';
 
   interface Props {
     wardrobeSection: WardrobeSection;
@@ -20,15 +21,18 @@
   <div class="scroll-x">
     {#each wardrobeSection.items.slice(0, 3) as item (item.id)}
       <div class="wardrobe-item">
-        <div class="item-thumb">
+        <button
+          class="item-thumb"
+          onclick={() => openLightbox(item.collectionImage, item.title)}
+          aria-label="View {item.title} full screen"
+        >
           <img
             src={item.collectionImage}
             alt={item.title}
             class="item-img"
             loading="lazy"
           />
-          <!-- shimmer overlay while generating (if still showing original imageUrl) -->
-        </div>
+        </button>
         <div class="item-info">
           <div class="item-details">
             <p class="item-name">{item.products?.[0]?.name}</p>
@@ -110,6 +114,12 @@
     width: 100%;
     aspect-ratio: 9.5 / 14.375;
     overflow: hidden;
+    display: block;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
   }
 
   .item-img {

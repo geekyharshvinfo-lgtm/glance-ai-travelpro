@@ -6,6 +6,7 @@
   import TravelProWardrobeSection from '$lib/components/travelpro/TravelProWardrobeSection.svelte';
   import TravelProEditorialSection from '$lib/components/travelpro/TravelProEditorialSection.svelte';
   import TravelProHero from '$lib/components/travelpro/TravelProHero.svelte';
+  import Lightbox from '$lib/components/travelpro/Lightbox.svelte';
   import Footer from '$lib/components/influencer/Footer.svelte';
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
 
@@ -283,6 +284,8 @@
 <svelte:head>
   <title>TravelPro | Your Personal Store</title>
 </svelte:head>
+
+<Lightbox />
 
 <div class="page">
   {#if error}

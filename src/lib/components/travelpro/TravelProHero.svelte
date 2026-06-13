@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { openLightbox } from '$lib/stores/lightbox.svelte';
+
   interface Props {
     generatedUrl: string | null;
     status: 'pending' | 'generating' | 'done' | 'error';
@@ -12,7 +14,9 @@
 <section class="hero">
   <div class="hero-image-wrap">
     {#if status === 'done' && generatedUrl}
-      <img src={generatedUrl} alt="Your TravelPro hero look" class="hero-img" />
+      <button class="hero-img-btn" onclick={() => openLightbox(generatedUrl, 'Your TravelPro hero look')} aria-label="View full screen">
+        <img src={generatedUrl} alt="Your TravelPro hero look" class="hero-img" />
+      </button>
     {:else}
       <!-- While generating: blurred selfie bg -->
       {#if selfieDataUrl}
@@ -46,6 +50,17 @@
     max-height: 92vh;
     overflow: hidden;
     background: #1a1a1a;
+  }
+
+  .hero-img-btn {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
   }
 
   .hero-img {
