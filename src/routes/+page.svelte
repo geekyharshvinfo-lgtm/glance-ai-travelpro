@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { browser } from '$app/environment';
   import { GlanceAILogo, CameraGradientIcon } from '$lib/components/icons';
   import Camera from '$lib/components/onboarding/Camera.svelte';
   import { onboardingStore, setOnboardingStep, setSelfie, clearSelfie } from '$lib/stores/onboarding.svelte';
@@ -12,20 +11,12 @@
   let selfieDataUrl = $state<string | null>(null);
   let isLoading = $state(false);
 
-  function clearStoreCache() {
-    const keysToRemove = Object.keys(sessionStorage).filter(k => k.startsWith('tp_img_') || k === 'tp_catalogue');
-    keysToRemove.forEach(k => sessionStorage.removeItem(k));
-    sessionStorage.removeItem('travelpro_selfie');
-  }
-
   function triggerCamera() {
-    clearStoreCache();
     mode = 'camera';
     setOnboardingStep('camera');
   }
 
   function triggerFileInput() {
-    clearStoreCache();
     fileInput?.click();
   }
 
@@ -80,13 +71,6 @@
   // Set to false to revert to localStorage (shared across all tabs on same device)
   const USE_SESSION_STORAGE = true;
   const selfieStorage = USE_SESSION_STORAGE ? sessionStorage : localStorage;
-
-  // Show "View your store" if a generated feed exists in this tab's cache
-  const hasCachedStore = $derived(
-    browser &&
-    sessionStorage.getItem('travelpro_selfie') !== null &&
-    Object.keys(sessionStorage).some(k => k.startsWith('tp_img_'))
-  );
 
   async function buildStore() {
     if (!selfieDataUrl) return;
@@ -169,12 +153,6 @@
         <button class="take-selfie-btn" onclick={triggerCamera}>TAKE A PHOTO</button>
         <span class="or-text">OR</span>
         <button class="upload-photo-btn" onclick={triggerFileInput}>UPLOAD PHOTO</button>
-
-        {#if hasCachedStore}
-          <button class="view-store-btn" onclick={() => goto('/travelpro')}>
-            VIEW YOUR STORE →
-          </button>
-        {/if}
       </div>
     </div>
   {/if}
@@ -347,24 +325,4 @@
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  .view-store-btn {
-    width: 100%;
-    max-width: 300px;
-    padding: 19.5px 30px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 1.25rem;
-    border: 1px solid rgba(118, 90, 234, 0.6);
-    background: rgba(118, 90, 234, 0.18);
-    color: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(5px);
-  }
 </style>

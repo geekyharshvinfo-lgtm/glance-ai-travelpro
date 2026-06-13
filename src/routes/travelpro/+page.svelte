@@ -41,34 +41,12 @@
     status: 'pending' | 'generating' | 'done' | 'error';
   };
 
-  // Pre-check cache synchronously before first render so we can skip the loader entirely
-  function checkFullCache(): { collections: TravelProCollection[]; generatedCards: Map<string, GeneratedCard>; heroGenerated: string | null } | null {
-    try {
-      const cachedCatalogue = sessionStorage.getItem('tp_catalogue');
-      const cachedHero = sessionStorage.getItem('tp_img_hero');
-      if (!cachedCatalogue || !cachedHero) return null;
-      const data = JSON.parse(cachedCatalogue) as { collections: TravelProCollection[] };
-      const cols = data.collections ?? [];
-      const map = new Map<string, GeneratedCard>();
-      for (const col of cols) {
-        for (const p of col.products) {
-          const img = sessionStorage.getItem(`tp_img_${p.id}`);
-          if (!img) return null; // not fully cached
-          map.set(p.id, { productId: p.id, generatedUrl: img, status: 'done' });
-        }
-      }
-      return { collections: cols, generatedCards: map, heroGenerated: cachedHero };
-    } catch { return null; }
-  }
-
-  const _preloaded = typeof sessionStorage !== 'undefined' ? checkFullCache() : null;
-
   let selfieDataUrl = $state<string | null>(null);
-  let collections = $state<TravelProCollection[]>(_preloaded?.collections ?? []);
-  let generatedCards = $state<Map<string, GeneratedCard>>(_preloaded?.generatedCards ?? new Map());
-  let heroGenerated = $state<string | null>(_preloaded?.heroGenerated ?? null);
-  let heroStatus = $state<'pending' | 'generating' | 'done' | 'error'>(_preloaded ? 'done' : 'pending');
-  let loadingCatalogue = $state(_preloaded ? false : true);
+  let collections = $state<TravelProCollection[]>([]);
+  let generatedCards = $state<Map<string, GeneratedCard>>(new Map());
+  let heroGenerated = $state<string | null>(null);
+  let heroStatus = $state<'pending' | 'generating' | 'done' | 'error'>('pending');
+  let loadingCatalogue = $state(true);
   let error = $state('');
 
   // Build sections from collections — editorial (look) UI for uiStyle === 'editorial',
@@ -136,24 +114,29 @@
   );
 
   onMount(async () => {
-    const selfie = selfieStorage.getItem('travelpro_selfie');
-    if (!selfie) { goto('/'); return; }
-    selfieDataUrl = selfie;
-
-    // If fully pre-loaded from cache, nothing left to do
-    if (_preloaded) return;
+    // On a hard refresh (not back-nav), clear everything and redirect to home
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type === 'reload') {
+      sessionStorage.removeItem('travelpro_selfie');
+      goto('/');
+      return;
+    }
 
     loaderMsgTimer = setInterval(() => {
       loaderMsgIndex = (loaderMsgIndex + 1) % loaderMessages.length;
     }, 2600);
 
+    const selfie = selfieStorage.getItem('travelpro_selfie');
+    if (!selfie) { goto('/'); return; }
+    selfieDataUrl = selfie;
+
     try {
       const res = await fetch(`${BACKEND}/api/catalogue`);
       const data = await res.json();
-      try { sessionStorage.setItem('tp_catalogue', JSON.stringify(data)); } catch {}
       collections = data.collections ?? [];
       loadingCatalogue = false;
 
+      // Init all cards as pending
       const initMap = new Map<string, GeneratedCard>();
       for (const col of collections) {
         for (const p of col.products) {
@@ -219,7 +202,6 @@
       if (data.imageData) {
         heroGenerated = `data:${data.mimeType};base64,${data.imageData}`;
         heroStatus = 'done';
-        try { sessionStorage.setItem('tp_img_hero', heroGenerated); } catch {}
       } else {
         heroStatus = 'error';
       }
@@ -252,9 +234,7 @@
       const data = await res.json();
       const next = new Map(generatedCards);
       if (data.imageData) {
-        const generatedUrl = `data:${data.mimeType};base64,${data.imageData}`;
-        next.set(product.id, { productId: product.id, generatedUrl, status: 'done' });
-        try { sessionStorage.setItem(`tp_img_${product.id}`, generatedUrl); } catch {}
+        next.set(product.id, { productId: product.id, generatedUrl: `data:${data.mimeType};base64,${data.imageData}`, status: 'done' });
       } else {
         next.set(product.id, { productId: product.id, generatedUrl: null, status: 'error' });
       }
@@ -297,8 +277,7 @@
   let loaderMsgTimer: ReturnType<typeof setInterval> | undefined;
 
   // Reveal the page only once, so it doesn't flicker if counts briefly change.
-  // Start revealed=true immediately if everything was pre-loaded from cache.
-  let revealed = $state(_preloaded !== null);
+  let revealed = $state(false);
   $effect(() => {
     if (everythingReady) revealed = true;
   });
@@ -309,27 +288,8 @@
 
   function recapture() {
     selfieStorage.removeItem('travelpro_selfie');
-    // Clear all cached data so the next user starts fresh
-    const keysToRemove = Object.keys(sessionStorage).filter(k => k.startsWith('tp_img_') || k === 'tp_catalogue');
-    keysToRemove.forEach(k => sessionStorage.removeItem(k));
     goto('/');
   }
-
-  // Restore state on back-button navigation so images don't re-generate
-  export const snapshot = {
-    capture: () => ({
-      heroGenerated,
-      heroStatus,
-      revealed,
-      cards: [...generatedCards.entries()],
-    }),
-    restore: (s: { heroGenerated: string | null; heroStatus: typeof heroStatus; revealed: boolean; cards: [string, GeneratedCard][] }) => {
-      heroGenerated = s.heroGenerated;
-      heroStatus = s.heroStatus;
-      revealed = s.revealed;
-      generatedCards = new Map(s.cards);
-    },
-  };
 </script>
 
 <svelte:head>
