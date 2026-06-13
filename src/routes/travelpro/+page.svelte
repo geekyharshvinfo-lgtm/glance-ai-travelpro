@@ -128,16 +128,28 @@
       collections = data.collections ?? [];
       loadingCatalogue = false;
 
-      // Init all cards as pending
+      // Init cards — restore from sessionStorage cache if available
       const initMap = new Map<string, GeneratedCard>();
       for (const col of collections) {
         for (const p of col.products) {
-          initMap.set(p.id, { productId: p.id, generatedUrl: null, status: 'pending' });
+          const cached = sessionStorage.getItem(`tp_img_${p.id}`);
+          initMap.set(p.id, cached
+            ? { productId: p.id, generatedUrl: cached, status: 'done' }
+            : { productId: p.id, generatedUrl: null, status: 'pending' });
         }
       }
       generatedCards = initMap;
 
-      generateAll();
+      // Restore hero from cache if available
+      const cachedHero = sessionStorage.getItem('tp_img_hero');
+      if (cachedHero) {
+        heroGenerated = cachedHero;
+        heroStatus = 'done';
+      }
+
+      // Only generate what isn't cached
+      const anyPending = [...initMap.values()].some(c => c.status === 'pending');
+      if (anyPending || heroStatus !== 'done') generateAll();
     } catch {
       error = 'Failed to load catalogue.';
       loadingCatalogue = false;
@@ -194,6 +206,7 @@
       if (data.imageData) {
         heroGenerated = `data:${data.mimeType};base64,${data.imageData}`;
         heroStatus = 'done';
+        try { sessionStorage.setItem('tp_img_hero', heroGenerated); } catch {}
       } else {
         heroStatus = 'error';
       }
@@ -226,7 +239,9 @@
       const data = await res.json();
       const next = new Map(generatedCards);
       if (data.imageData) {
-        next.set(product.id, { productId: product.id, generatedUrl: `data:${data.mimeType};base64,${data.imageData}`, status: 'done' });
+        const generatedUrl = `data:${data.mimeType};base64,${data.imageData}`;
+        next.set(product.id, { productId: product.id, generatedUrl, status: 'done' });
+        try { sessionStorage.setItem(`tp_img_${product.id}`, generatedUrl); } catch {}
       } else {
         next.set(product.id, { productId: product.id, generatedUrl: null, status: 'error' });
       }
@@ -280,6 +295,9 @@
 
   function recapture() {
     selfieStorage.removeItem('travelpro_selfie');
+    // Clear all cached generated images so the next user starts fresh
+    const keysToRemove = Object.keys(sessionStorage).filter(k => k.startsWith('tp_img_'));
+    keysToRemove.forEach(k => sessionStorage.removeItem(k));
     goto('/');
   }
 

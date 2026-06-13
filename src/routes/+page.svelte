@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
   import { GlanceAILogo, CameraGradientIcon } from '$lib/components/icons';
   import Camera from '$lib/components/onboarding/Camera.svelte';
   import { onboardingStore, setOnboardingStep, setSelfie, clearSelfie } from '$lib/stores/onboarding.svelte';
@@ -71,6 +72,13 @@
   // Set to false to revert to localStorage (shared across all tabs on same device)
   const USE_SESSION_STORAGE = true;
   const selfieStorage = USE_SESSION_STORAGE ? sessionStorage : localStorage;
+
+  // Show "View your store" if a generated feed exists in this tab's cache
+  const hasCachedStore = $derived(
+    browser &&
+    sessionStorage.getItem('travelpro_selfie') !== null &&
+    Object.keys(sessionStorage).some(k => k.startsWith('tp_img_'))
+  );
 
   async function buildStore() {
     if (!selfieDataUrl) return;
@@ -153,6 +161,12 @@
         <button class="take-selfie-btn" onclick={triggerCamera}>TAKE A PHOTO</button>
         <span class="or-text">OR</span>
         <button class="upload-photo-btn" onclick={triggerFileInput}>UPLOAD PHOTO</button>
+
+        {#if hasCachedStore}
+          <button class="view-store-btn" onclick={() => goto('/travelpro')}>
+            VIEW YOUR STORE →
+          </button>
+        {/if}
       </div>
     </div>
   {/if}
@@ -325,4 +339,18 @@
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .view-store-btn {
+    margin-top: 1.25rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    border: 1px solid rgba(118, 90, 234, 0.6);
+    background: rgba(118, 90, 234, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+  }
 </style>
